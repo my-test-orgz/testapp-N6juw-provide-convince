@@ -1,0 +1,63 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  creationTimestamp: null
+  name: retrodep
+  namespace: default
+spec:
+  params:
+  - name: git-revision
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      annotations:
+        appstudio.openshift.io/application: my-test-app
+        appstudio.openshift.io/component: retrodep
+        build.appstudio.openshift.io/build: "true"
+        build.appstudio.openshift.io/type: build
+        build.appstudio.openshift.io/version: "0.1"
+        pipelines.appstudio.openshift.io/type: build
+      creationTimestamp: null
+      generateName: retrodep-
+      labels:
+        appstudio.openshift.io/application: my-test-app
+        appstudio.openshift.io/component: retrodep
+        build.appstudio.openshift.io/build: "true"
+        build.appstudio.openshift.io/type: build
+        build.appstudio.openshift.io/version: "0.1"
+        pipelines.appstudio.openshift.io/type: build
+      namespace: default
+    spec:
+      params:
+      - name: git-url
+        value: https://github.com/brunoapimentel/retrodep
+      - name: output-image
+        value: quay.io/bpimente/retrodep:7e3edd8-$(tt.params.git-revision)
+      - name: revision
+        value: 7e3edd8a0bcbf345e76ffc950ededa3c1b482282
+      - name: dockerfile
+        value: ./Dockerfile
+      pipelineRef:
+        bundle: quay.io/redhat-appstudio/build-templates-bundle:13f5d9c921b3f727684a00084037f673a0dc4273
+        name: docker-build
+      podTemplate:
+        imagePullSecrets:
+        - name: redhat-appstudio-registry-pull-secret
+      workspaces:
+      - name: workspace
+        volumeClaimTemplate:
+          metadata:
+            creationTimestamp: null
+          spec:
+            accessModes:
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+          status: {}
+      - name: registry-auth
+        secret:
+          secretName: redhat-appstudio-registry-pull-secret
+    status: {}
+status: {}
